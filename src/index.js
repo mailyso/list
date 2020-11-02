@@ -12,17 +12,9 @@ require('./index.css').toString();
 /**
  * List Tool for the Editor.js 2.0
  */
+
+const MAX_TABS = 7;
 class List {
-
-  /**
-   * Notify core that read-only mode is supported
-   *
-   * @returns {boolean}
-   */
-  static get isReadOnlySupported() {
-    return true;
-  }
-
   /**
    * Allow to use native Enter behaviour
    *
@@ -30,6 +22,10 @@ class List {
    * @public
    */
   static get enableLineBreaks() {
+    return true;
+  }
+
+  static get disableDefaultTabEvent() {
     return true;
   }
 
@@ -54,9 +50,8 @@ class List {
    * @param {ListData} params.data - previously saved data
    * @param {object} params.config - user config for Tool
    * @param {object} params.api - Editor.js API
-   * @param {boolean} params.readOnly - read-only mode flag
    */
-  constructor({ data, config, api, readOnly }) {
+  constructor({ data, config, api }) {
     /**
      * HTML nodes
      *
@@ -66,8 +61,11 @@ class List {
       wrapper: null,
     };
 
+    this.tracking = {
+      tabs: 0
+    }
+
     this.api = api;
-    this.readOnly = readOnly;
 
     this.settings = [
       {
@@ -92,9 +90,12 @@ class List {
     this._data = {
       style: this.settings.find((tune) => tune.default === true).name,
       items: [],
+      tabs: [],
     };
 
     this.data = data;
+    this.tabPress = this.tabPress.bind(this);
+    this.handleEnter = this.handleEnter.bind(this);
   }
 
   /**
@@ -107,37 +108,78 @@ class List {
     const style = this._data.style === 'ordered' ? this.CSS.wrapperOrdered : this.CSS.wrapperUnordered;
 
     this._elements.wrapper = this._make('ul', [this.CSS.baseBlock, this.CSS.wrapper, style], {
-      contentEditable: !this.readOnly,
+      contentEditable: true,
     });
 
     // fill with data
     if (this._data.items.length) {
-      this._data.items.forEach((item) => {
-        this._elements.wrapper.appendChild(this._make('li', this.CSS.item, {
+      this._data.items.forEach((item, index) => {
+        const elem = this._make('li', [this.CSS.item, `${this.CSS.tabBase}${this._data.tabs[index]}`], {
           innerHTML: item,
-        }));
+        });
+        this._elements.wrapper.appendChild(elem);
       });
     } else {
       this._elements.wrapper.appendChild(this._make('li', this.CSS.item));
     }
 
-    if (!this.readOnly) {
-      // detect keydown on the last item to escape List
-      this._elements.wrapper.addEventListener('keydown', (event) => {
-        const [ENTER, BACKSPACE] = [13, 8]; // key codes
+    // detect keydown on the last item to escape List
+    this._elements.wrapper.addEventListener('keydown', (event) => {
+      const [ENTER, BACKSPACE, TAB] = [13, 8, 9]; // key codes
+      console.log(event.keyCode);
+      if(event.keyCode === TAB) {
+        this.tabPress(event);
+        return;
+      }
+      this.handleTabTrack(event);
 
-        switch (event.keyCode) {
-          case ENTER:
-            this.getOutofList(event);
-            break;
-          case BACKSPACE:
-            this.backspace(event);
-            break;
-        }
-      }, false);
-    }
+      switch (event.keyCode) {
+        case ENTER:
+          this.handleEnter(event);
+          this.getOutofList(event);
+          break;
+        case BACKSPACE:
+          this.backspace(event);
+          break;
+      }
+    });
 
     return this._elements.wrapper;
+  }
+
+  tabPress(event) {
+    const node = getCurrentNode();
+    const curTab = this.getTabCount(node);
+    if(event.shiftKey === true) {
+      if(curTab >= 1) {
+        this.setTab(node, curTab - 1);
+        this.tracking.tabs = curTab - 1;
+      }
+    } else {
+      if(curTab < MAX_TABS) {
+        this.setTab(node, curTab + 1)
+        this.tracking.tabs = curTab + 1;
+      }
+    }
+  }
+
+  handleTabTrack(event) {
+    setTimeout(() => {
+      const node = getCurrentNode();
+      this.tracking.tabs = this.getTabCount(node);
+    }, 0)
+  }
+
+  handleEnter(event) {
+    //  after enter is processed
+    setTimeout(() => {
+      const node = getCurrentNode();
+      if(!node) return;
+      const nodeClassList = node.className.split(" ");
+      if(nodeClassList[0] === this.CSS.item) {
+        node.classList.add(`${this.CSS.tabBase}${this.tracking.tabs}`);
+      }
+    }, 0);
   }
 
   /**
@@ -283,6 +325,7 @@ class List {
       wrapperUnordered: 'cdx-list--unordered',
       item: 'cdx-list__item',
       settingsWrapper: 'cdx-list-settings',
+      tabBase: 'cdx-list--tab_',
       settingsButton: this.api.styles.settingsButton,
       settingsButtonActive: this.api.styles.settingsButtonActive,
     };
@@ -300,6 +343,7 @@ class List {
 
     this._data.style = listData.style || this.settings.find((tune) => tune.default === true).name;
     this._data.items = listData.items || [];
+    this._data.tabs = listData.tabs || this._data.items.map(v => 0);
 
     const oldView = this._elements.wrapper;
 
@@ -315,6 +359,7 @@ class List {
    */
   get data() {
     this._data.items = [];
+    this._data.tabs = [];
 
     const items = this._elements.wrapper.querySelectorAll(`.${this.CSS.item}`);
 
@@ -323,10 +368,50 @@ class List {
 
       if (value) {
         this._data.items.push(items[i].innerHTML);
+        this._data.tabs.push(this.getTabCount(items[i]));
       }
     }
 
     return this._data;
+  }
+
+  /**
+   * set tabs
+   * @param elem {element} target to set tabs
+   * @param num {number} number of tabs to add
+   */
+  setTab(elem, num) {
+    this.removeTab(elem);
+
+    elem.classList.add(`${this.CSS.tabBase}${num <= MAX_TABS ? num : MAX_TABS}`);
+  }
+
+  /**
+   * get amount of tabs
+   * @param elem {element} target element to extract tab count
+   * @returns {number}
+   */
+  getTabCount(elem) {
+    const elemClassList = elem.className.split(" ");
+    //  clear original tabs
+    let tabs = 0;
+    elemClassList.forEach(className => {
+      if(className.includes(this.CSS.tabBase)) {
+        tabs = `${className.charAt(className.length - 1)}`;
+      }
+    });
+    return Number(tabs);
+  }
+
+  /**
+   *  remove all tabs
+   * @param elem {element} target to remove tabs
+   */
+  removeTab(elem) {
+    const elemClassList = elem.className.split(" ");
+    elemClassList.forEach(className => {
+      if(className.includes(this.CSS.tabBase)) elem.classList.remove(className);
+    });
   }
 
   /**
@@ -473,6 +558,15 @@ class List {
 
     return data;
   }
+}
+
+/**
+ * get current focused element
+ * @returns {element}
+ */
+function getCurrentNode() {
+  const node = window.getSelection().getRangeAt(0).commonAncestorContainer;
+  return node.nodeType === 1 ? node : node.parentNode;
 }
 
 module.exports = List;
