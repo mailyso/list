@@ -120,12 +120,13 @@ class List {
           innerHTML: item,
           style: `list-style-type: "${index+1}.";`
         });
+        this.handleNumber(elem);
         this._elements.wrapper.appendChild(elem);
       });
     } else {
-      const elem = this._make('li', this.CSS.item, {
+      const elem = this._make('li', this.CSS.item, this._data.style === 'ordered' ? {
         style: `list-style-type: "1.";`
-      });
+      } : undefined);
       this._elements.wrapper.appendChild(elem);
     }
 
@@ -178,6 +179,7 @@ class List {
         this.tracking.tabs = curTab + 1;
       }
     }
+    this.handleNumber(node);
   }
 
   handleTabTrack(event) {
@@ -202,11 +204,10 @@ class List {
     // this.handleNumber(node);
   }
 
-  handleNumber(node) {
-    if(this._data.style !== "ordered") return;
+  handleNumber(node, force=false) {
+    if(this._data.style !== "ordered" && !force) return;
     const liArr = Array.from(node.parentNode.children);
     let curElemIndex = liArr.indexOf(node);
-    console.log("index >>>>",curElemIndex);
     const curData = this.data;
     this.setLiNumber(node, curData, curElemIndex);
     if(liArr.length - 1 !== curElemIndex) {
@@ -218,7 +219,18 @@ class List {
   }
 
   setLiNumber(node, curData, index) {
-    node.style = `list-style-type: "${1 + index}.";`
+    // console.log(index, curData.tabs[index], curData.tabs);
+    const nodeTab = curData.tabs[index];
+    let curTabIndex = index;
+    let dispNum = 0;
+    while(curData.tabs[curTabIndex] >= nodeTab && curTabIndex >= 0) {
+      if(curData.tabs[curTabIndex] === nodeTab) {
+        dispNum++;
+      }
+      curTabIndex--;
+    }
+
+    node.style = `list-style-type: "${dispNum}.";`
   }
 
   /**
@@ -347,7 +359,16 @@ class List {
   toggleTune(style) {
     this._elements.wrapper.classList.toggle(this.CSS.wrapperOrdered, style === 'ordered');
     this._elements.wrapper.classList.toggle(this.CSS.wrapperUnordered, style === 'unordered');
-
+    const children = Array.from(this._elements.wrapper.children)
+    if(style === "unordered") {
+      children.forEach(elem => {
+        elem.style = `list-style-type: unset;`;
+      })
+    } else {
+      children.forEach(elem => {
+        this.handleNumber(elem, true);
+      })
+    }
     this._data.style = style;
   }
 
