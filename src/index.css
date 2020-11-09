@@ -1,14 +1,13 @@
 :root {
-	--cdx-list-base-padding: 15px;
+	--cdx-list-base-padding: 20px;
 }
 
 .cdx-list {
-    margin: 0;
-    margin-left: 40px;
+    margin-left: 20px;
     outline: none;
 
     &__item {
-        margin: 5.5px 0 5.5px 3px;
+        margin: 5px 0;
         line-height: 1.6em;
     }
 
@@ -17,7 +16,7 @@
     }
 
     &--ordered {
-        list-style: decimal;
+	      list-style-type: none;
     }
 
     &-settings {
@@ -52,5 +51,11 @@
 		&_7 {
 			margin-left: calc(var(--cdx-list-base-padding) * 7);
 		}
+	}
+	&--number {
+		position: absolute;
+		left: -100%;
+		top: 50%;
+		transform: translate(-50%, -50%);
 	}
 }

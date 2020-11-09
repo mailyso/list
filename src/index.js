@@ -14,6 +14,7 @@ require('./index.css').toString();
  */
 
 const MAX_TABS = 7;
+const [ENTER, BACKSPACE, TAB] = [13, 8, 9]; // key codes
 class List {
   /**
    * Allow to use native Enter behaviour
@@ -96,6 +97,7 @@ class List {
     this.data = data;
     this.tabPress = this.tabPress.bind(this);
     this.handleEnter = this.handleEnter.bind(this);
+    this.handleNumber = this.handleNumber.bind(this);
   }
 
   /**
@@ -116,17 +118,20 @@ class List {
       this._data.items.forEach((item, index) => {
         const elem = this._make('li', [this.CSS.item, `${this.CSS.tabBase}${this._data.tabs[index]}`], {
           innerHTML: item,
+          style: `list-style-type: "${index+1}.";`
         });
         this._elements.wrapper.appendChild(elem);
       });
     } else {
-      this._elements.wrapper.appendChild(this._make('li', this.CSS.item));
+      const elem = this._make('li', this.CSS.item, {
+        style: `list-style-type: "1.";`
+      });
+      this._elements.wrapper.appendChild(elem);
     }
 
     // detect keydown on the last item to escape List
     this._elements.wrapper.addEventListener('keydown', (event) => {
-      const [ENTER, BACKSPACE, TAB] = [13, 8, 9]; // key codes
-      console.log(event.keyCode);
+
       if(event.keyCode === TAB) {
         this.tabPress(event);
         return;
@@ -141,6 +146,18 @@ class List {
         case BACKSPACE:
           this.backspace(event);
           break;
+      }
+    });
+    this._elements.wrapper.addEventListener('input', (event) => {
+      //  enter has occurred
+      if(event.target.childNodes.length !== this._data.items.length) {
+        const node = getCurrentNode();
+        if(node) {
+          const nodeClassList = node.className.split(" ");
+          if(nodeClassList[0] === this.CSS.item) {
+            this.handleNumber(node);
+          }
+        }
       }
     });
 
@@ -180,6 +197,28 @@ class List {
         node.classList.add(`${this.CSS.tabBase}${this.tracking.tabs}`);
       }
     }, 0);
+    // const node = getCurrentNode();
+    // if(!node) return;
+    // this.handleNumber(node);
+  }
+
+  handleNumber(node) {
+    if(this._data.style !== "ordered") return;
+    const liArr = Array.from(node.parentNode.children);
+    let curElemIndex = liArr.indexOf(node);
+    console.log("index >>>>",curElemIndex);
+    const curData = this.data;
+    this.setLiNumber(node, curData, curElemIndex);
+    if(liArr.length - 1 !== curElemIndex) {
+      while(curElemIndex < liArr.length - 1) {
+        curElemIndex++;
+        this.setLiNumber(liArr[curElemIndex], curData, curElemIndex);
+      }
+    }
+  }
+
+  setLiNumber(node, curData, index) {
+    node.style = `list-style-type: "${1 + index}.";`
   }
 
   /**
@@ -328,6 +367,7 @@ class List {
       tabBase: 'cdx-list--tab_',
       settingsButton: this.api.styles.settingsButton,
       settingsButtonActive: this.api.styles.settingsButtonActive,
+      listNumber: 'cdx-list--number',
     };
   }
 
@@ -364,12 +404,12 @@ class List {
     const items = this._elements.wrapper.querySelectorAll(`.${this.CSS.item}`);
 
     for (let i = 0; i < items.length; i++) {
-      const value = items[i].innerHTML.replace('<br>', ' ').trim();
+      // const value = items[i].innerHTML.replace('<br>', ' ').trim();
 
-      if (value) {
+      // if (value) {
         this._data.items.push(items[i].innerHTML);
         this._data.tabs.push(this.getTabCount(items[i]));
-      }
+      // }
     }
 
     return this._data;
