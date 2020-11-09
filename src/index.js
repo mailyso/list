@@ -120,7 +120,6 @@ class List {
           innerHTML: item,
           style: `list-style-type: "${index+1}.";`
         });
-        this.handleNumber(elem);
         this._elements.wrapper.appendChild(elem);
       });
     } else {
@@ -128,6 +127,11 @@ class List {
         style: `list-style-type: "1.";`
       } : undefined);
       this._elements.wrapper.appendChild(elem);
+    }
+    if(style !== "unordered") {
+      Array.from(this._elements.wrapper.children).forEach(elem => {
+        this.handleNumber(elem, true);
+      })
     }
 
     // detect keydown on the last item to escape List
