@@ -2,7 +2,7 @@
  * Build styles
  */
 require('./index.css').toString();
-const {setLiNumber, getTabCount, removeTab, _make, MAX_TABS, tabBase, getCurrentNode} = require("./helpers");
+const {setLiNumber, getTabCount, removeTab, _make, MAX_TABS, tabBase, getCurrentNode, setTab} = require("./helpers");
 
 /**
  * @typedef {object} ListData
@@ -176,12 +176,18 @@ class List {
     const curTab = getTabCount(node);
     if(event.shiftKey === true) {
       if(curTab >= 1) {
-        this.setTab(node, curTab - 1);
+        setTab(node, curTab - 1);
         this.tracking.tabs = curTab - 1;
       }
     } else {
-      if(curTab < MAX_TABS) {
-        this.setTab(node, curTab + 1)
+      const liArr = Array.from(node.parentNode.children);
+      let curElemIndex = liArr.indexOf(node);
+      let max = 1;
+      if(curElemIndex >= 1) {
+        max = this._data.tabs[curElemIndex-1] + 1;
+      }
+      if(curTab < Math.min(MAX_TABS, max)) {
+        setTab(node, curTab + 1)
         this.tracking.tabs = curTab + 1;
       }
     }
