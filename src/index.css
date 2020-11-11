@@ -1,10 +1,13 @@
+:root {
+	--cdx-list-base-padding: 20px;
+}
+
 .cdx-list {
-    margin: 0;
-    padding-left: 40px;
+    margin-left: 20px;
     outline: none;
 
     &__item {
-        padding: 5.5px 0 5.5px 3px;
+        margin: 5px 0;
         line-height: 1.6em;
     }
 
@@ -13,7 +16,7 @@
     }
 
     &--ordered {
-        list-style: decimal;
+	      list-style-type: none;
     }
 
     &-settings {
@@ -23,4 +26,36 @@
             width: 50%;
         }
     }
+	&--tab {
+		&_0 {
+			margin-left: 0;
+		}
+		&_1 {
+			margin-left: var(--cdx-list-base-padding);
+		}
+		&_2 {
+			margin-left: calc(var(--cdx-list-base-padding) * 2);
+		}
+		&_3 {
+			margin-left: calc(var(--cdx-list-base-padding) * 3);
+		}
+		&_4 {
+			margin-left: calc(var(--cdx-list-base-padding) * 4);
+		}
+		&_5 {
+			margin-left: calc(var(--cdx-list-base-padding) * 5);
+		}
+		&_6 {
+			margin-left: calc(var(--cdx-list-base-padding) * 6);
+		}
+		&_7 {
+			margin-left: calc(var(--cdx-list-base-padding) * 7);
+		}
+	}
+	&--number {
+		position: absolute;
+		left: -100%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+	}
 }

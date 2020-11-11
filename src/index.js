@@ -2,6 +2,7 @@
  * Build styles
  */
 require('./index.css').toString();
+const {setLiNumber, getTabCount, removeTab, _make, MAX_TABS, tabBase, getCurrentNode, setTab} = require("./helpers");
 
 /**
  * @typedef {object} ListData
@@ -12,17 +13,9 @@ require('./index.css').toString();
 /**
  * List Tool for the Editor.js 2.0
  */
+
+const [ENTER, BACKSPACE, TAB] = [13, 8, 9]; // key codes
 class List {
-
-  /**
-   * Notify core that read-only mode is supported
-   *
-   * @returns {boolean}
-   */
-  static get isReadOnlySupported() {
-    return true;
-  }
-
   /**
    * Allow to use native Enter behaviour
    *
@@ -30,6 +23,10 @@ class List {
    * @public
    */
   static get enableLineBreaks() {
+    return true;
+  }
+
+  static get disableDefaultTabEvent() {
     return true;
   }
 
@@ -54,9 +51,8 @@ class List {
    * @param {ListData} params.data - previously saved data
    * @param {object} params.config - user config for Tool
    * @param {object} params.api - Editor.js API
-   * @param {boolean} params.readOnly - read-only mode flag
    */
-  constructor({ data, config, api, readOnly }) {
+  constructor({ data, config, api }) {
     /**
      * HTML nodes
      *
@@ -66,8 +62,11 @@ class List {
       wrapper: null,
     };
 
+    this.tracking = {
+      tabs: 0
+    }
+
     this.api = api;
-    this.readOnly = readOnly;
 
     this.settings = [
       {
@@ -92,9 +91,13 @@ class List {
     this._data = {
       style: this.settings.find((tune) => tune.default === true).name,
       items: [],
+      tabs: [],
     };
 
     this.data = data;
+    this.tabPress = this.tabPress.bind(this);
+    this.handleEnter = this.handleEnter.bind(this);
+    this.handleNumber = this.handleNumber.bind(this);
   }
 
   /**
@@ -106,39 +109,128 @@ class List {
   render() {
     const style = this._data.style === 'ordered' ? this.CSS.wrapperOrdered : this.CSS.wrapperUnordered;
 
-    this._elements.wrapper = this._make('ul', [this.CSS.baseBlock, this.CSS.wrapper, style], {
-      contentEditable: !this.readOnly,
+    this._elements.wrapper = _make('ul', [this.CSS.baseBlock, this.CSS.wrapper, style], {
+      contentEditable: true,
     });
 
     // fill with data
     if (this._data.items.length) {
-      this._data.items.forEach((item) => {
-        this._elements.wrapper.appendChild(this._make('li', this.CSS.item, {
+      this._data.items.forEach((item, index) => {
+        const elem = _make('li', [this.CSS.item, `${this.CSS.tabBase}${this._data.tabs[index]}`], {
           innerHTML: item,
-        }));
+          style: `list-style-type: "${index+1}.";`
+        });
+        this._elements.wrapper.appendChild(elem);
       });
     } else {
-      this._elements.wrapper.appendChild(this._make('li', this.CSS.item));
+      const elem = _make('li', this.CSS.item, this._data.style === 'ordered' ? {
+        style: `list-style-type: "1.";`
+      } : undefined);
+      this._elements.wrapper.appendChild(elem);
+    }
+    if(style !== "unordered") {
+      Array.from(this._elements.wrapper.children).forEach(elem => {
+        this.handleNumber(elem, true);
+      })
     }
 
-    if (!this.readOnly) {
-      // detect keydown on the last item to escape List
-      this._elements.wrapper.addEventListener('keydown', (event) => {
-        const [ENTER, BACKSPACE] = [13, 8]; // key codes
+    // detect keydown on the last item to escape List
+    this._elements.wrapper.addEventListener('keydown', (event) => {
 
-        switch (event.keyCode) {
-          case ENTER:
-            this.getOutofList(event);
-            break;
-          case BACKSPACE:
-            this.backspace(event);
-            break;
+      if(event.keyCode === TAB) {
+        this.tabPress(event);
+        return;
+      }
+      this.handleTabTrack(event);
+
+      switch (event.keyCode) {
+        case ENTER:
+          this.handleEnter(event);
+          this.getOutofList(event);
+          // TODO getOutOfUl(event)
+          break;
+        case BACKSPACE:
+          // TODO deleteCurrentUl(event)
+          this.backspace(event);
+          break;
+      }
+    });
+    this._elements.wrapper.addEventListener('input', (event) => {
+      //  enter has occurred
+      if(event.target.childNodes.length !== this._data.items.length) {
+        const node = getCurrentNode();
+        if(node) {
+          const nodeClassList = node.className.split(" ");
+          if(nodeClassList[0] === this.CSS.item) {
+            this.handleNumber(node);
+          }
         }
-      }, false);
-    }
+      }
+    });
 
     return this._elements.wrapper;
   }
+
+  tabPress(event) {
+    const node = getCurrentNode();
+    const curTab = getTabCount(node);
+    if(event.shiftKey === true) {
+      if(curTab >= 1) {
+        setTab(node, curTab - 1);
+        this.tracking.tabs = curTab - 1;
+      }
+    } else {
+      const liArr = Array.from(node.parentNode.children);
+      let curElemIndex = liArr.indexOf(node);
+      let max = 1;
+      if(curElemIndex >= 1) {
+        max = this._data.tabs[curElemIndex-1] + 1;
+      }
+      if(curTab < Math.min(MAX_TABS, max)) {
+        setTab(node, curTab + 1)
+        this.tracking.tabs = curTab + 1;
+      }
+    }
+    this.handleNumber(node);
+  }
+
+  handleTabTrack(event) {
+    setTimeout(() => {
+      const node = getCurrentNode();
+      this.tracking.tabs = getTabCount(node);
+    }, 0)
+  }
+
+  handleEnter(event) {
+    //  after enter is processed
+    setTimeout(() => {
+      const node = getCurrentNode();
+      if(!node) return;
+      const nodeClassList = node.className.split(" ");
+      if(nodeClassList[0] === this.CSS.item) {
+        node.classList.add(`${this.CSS.tabBase}${this.tracking.tabs}`);
+      }
+    }, 0);
+    // const node = getCurrentNode();
+    // if(!node) return;
+    // this.handleNumber(node);
+  }
+
+  handleNumber(node, force=false) {
+    if(this._data.style !== "ordered" && !force) return;
+    const liArr = Array.from(node.parentNode.children);
+    let curElemIndex = liArr.indexOf(node);
+    const curData = this.data;
+    setLiNumber(node, curData, curElemIndex);
+    if(liArr.length - 1 !== curElemIndex) {
+      while(curElemIndex < liArr.length - 1) {
+        curElemIndex++;
+        setLiNumber(liArr[curElemIndex], curData, curElemIndex);
+      }
+    }
+  }
+
+
 
   /**
    * @returns {ListData}
@@ -200,10 +292,10 @@ class List {
    * @returns {Element}
    */
   renderSettings() {
-    const wrapper = this._make('div', [ this.CSS.settingsWrapper ], {});
+    const wrapper = _make('div', [ this.CSS.settingsWrapper ], {});
 
     this.settings.forEach((item) => {
-      const itemEl = this._make('div', this.CSS.settingsButton, {
+      const itemEl = _make('div', this.CSS.settingsButton, {
         innerHTML: item.icon,
       });
 
@@ -266,7 +358,16 @@ class List {
   toggleTune(style) {
     this._elements.wrapper.classList.toggle(this.CSS.wrapperOrdered, style === 'ordered');
     this._elements.wrapper.classList.toggle(this.CSS.wrapperUnordered, style === 'unordered');
-
+    const children = Array.from(this._elements.wrapper.children)
+    if(style === "unordered") {
+      children.forEach(elem => {
+        elem.style = `list-style-type: unset;`;
+      })
+    } else {
+      children.forEach(elem => {
+        this.handleNumber(elem, true);
+      })
+    }
     this._data.style = style;
   }
 
@@ -283,8 +384,10 @@ class List {
       wrapperUnordered: 'cdx-list--unordered',
       item: 'cdx-list__item',
       settingsWrapper: 'cdx-list-settings',
+      tabBase: tabBase,
       settingsButton: this.api.styles.settingsButton,
       settingsButtonActive: this.api.styles.settingsButtonActive,
+      listNumber: 'cdx-list--number',
     };
   }
 
@@ -300,6 +403,7 @@ class List {
 
     this._data.style = listData.style || this.settings.find((tune) => tune.default === true).name;
     this._data.items = listData.items || [];
+    this._data.tabs = listData.tabs || this._data.items.map(v => 0);
 
     const oldView = this._elements.wrapper;
 
@@ -315,42 +419,20 @@ class List {
    */
   get data() {
     this._data.items = [];
+    this._data.tabs = [];
 
     const items = this._elements.wrapper.querySelectorAll(`.${this.CSS.item}`);
 
     for (let i = 0; i < items.length; i++) {
-      const value = items[i].innerHTML.replace('<br>', ' ').trim();
+      // const value = items[i].innerHTML.replace('<br>', ' ').trim();
 
-      if (value) {
+      // if (value) {
         this._data.items.push(items[i].innerHTML);
-      }
+        this._data.tabs.push(getTabCount(items[i]));
+      // }
     }
 
     return this._data;
-  }
-
-  /**
-   * Helper for making Elements with attributes
-   *
-   * @param  {string} tagName           - new Element tag name
-   * @param  {Array|string} classNames  - list or name of CSS classname(s)
-   * @param  {object} attributes        - any attributes
-   * @returns {Element}
-   */
-  _make(tagName, classNames = null, attributes = {}) {
-    const el = document.createElement(tagName);
-
-    if (Array.isArray(classNames)) {
-      el.classList.add(...classNames);
-    } else if (classNames) {
-      el.classList.add(classNames);
-    }
-
-    for (const attrName in attributes) {
-      el[attrName] = attributes[attrName];
-    }
-
-    return el;
   }
 
   /**
