@@ -2,6 +2,7 @@
  * Build styles
  */
 require('./index.css').toString();
+const {setLiNumber, getTabCount, removeTab, _make, MAX_TABS, tabBase, getCurrentNode} = require("./helpers");
 
 /**
  * @typedef {object} ListData
@@ -13,7 +14,6 @@ require('./index.css').toString();
  * List Tool for the Editor.js 2.0
  */
 
-const MAX_TABS = 7;
 const [ENTER, BACKSPACE, TAB] = [13, 8, 9]; // key codes
 class List {
   /**
@@ -109,21 +109,21 @@ class List {
   render() {
     const style = this._data.style === 'ordered' ? this.CSS.wrapperOrdered : this.CSS.wrapperUnordered;
 
-    this._elements.wrapper = this._make('ul', [this.CSS.baseBlock, this.CSS.wrapper, style], {
+    this._elements.wrapper = _make('ul', [this.CSS.baseBlock, this.CSS.wrapper, style], {
       contentEditable: true,
     });
 
     // fill with data
     if (this._data.items.length) {
       this._data.items.forEach((item, index) => {
-        const elem = this._make('li', [this.CSS.item, `${this.CSS.tabBase}${this._data.tabs[index]}`], {
+        const elem = _make('li', [this.CSS.item, `${this.CSS.tabBase}${this._data.tabs[index]}`], {
           innerHTML: item,
           style: `list-style-type: "${index+1}.";`
         });
         this._elements.wrapper.appendChild(elem);
       });
     } else {
-      const elem = this._make('li', this.CSS.item, this._data.style === 'ordered' ? {
+      const elem = _make('li', this.CSS.item, this._data.style === 'ordered' ? {
         style: `list-style-type: "1.";`
       } : undefined);
       this._elements.wrapper.appendChild(elem);
@@ -147,8 +147,10 @@ class List {
         case ENTER:
           this.handleEnter(event);
           this.getOutofList(event);
+          // TODO getOutOfUl(event)
           break;
         case BACKSPACE:
+          // TODO deleteCurrentUl(event)
           this.backspace(event);
           break;
       }
@@ -171,7 +173,7 @@ class List {
 
   tabPress(event) {
     const node = getCurrentNode();
-    const curTab = this.getTabCount(node);
+    const curTab = getTabCount(node);
     if(event.shiftKey === true) {
       if(curTab >= 1) {
         this.setTab(node, curTab - 1);
@@ -189,7 +191,7 @@ class List {
   handleTabTrack(event) {
     setTimeout(() => {
       const node = getCurrentNode();
-      this.tracking.tabs = this.getTabCount(node);
+      this.tracking.tabs = getTabCount(node);
     }, 0)
   }
 
@@ -213,29 +215,16 @@ class List {
     const liArr = Array.from(node.parentNode.children);
     let curElemIndex = liArr.indexOf(node);
     const curData = this.data;
-    this.setLiNumber(node, curData, curElemIndex);
+    setLiNumber(node, curData, curElemIndex);
     if(liArr.length - 1 !== curElemIndex) {
       while(curElemIndex < liArr.length - 1) {
         curElemIndex++;
-        this.setLiNumber(liArr[curElemIndex], curData, curElemIndex);
+        setLiNumber(liArr[curElemIndex], curData, curElemIndex);
       }
     }
   }
 
-  setLiNumber(node, curData, index) {
-    // console.log(index, curData.tabs[index], curData.tabs);
-    const nodeTab = curData.tabs[index];
-    let curTabIndex = index;
-    let dispNum = 0;
-    while(curData.tabs[curTabIndex] >= nodeTab && curTabIndex >= 0) {
-      if(curData.tabs[curTabIndex] === nodeTab) {
-        dispNum++;
-      }
-      curTabIndex--;
-    }
 
-    node.style = `list-style-type: "${dispNum}.";`
-  }
 
   /**
    * @returns {ListData}
@@ -297,10 +286,10 @@ class List {
    * @returns {Element}
    */
   renderSettings() {
-    const wrapper = this._make('div', [ this.CSS.settingsWrapper ], {});
+    const wrapper = _make('div', [ this.CSS.settingsWrapper ], {});
 
     this.settings.forEach((item) => {
-      const itemEl = this._make('div', this.CSS.settingsButton, {
+      const itemEl = _make('div', this.CSS.settingsButton, {
         innerHTML: item.icon,
       });
 
@@ -389,7 +378,7 @@ class List {
       wrapperUnordered: 'cdx-list--unordered',
       item: 'cdx-list__item',
       settingsWrapper: 'cdx-list-settings',
-      tabBase: 'cdx-list--tab_',
+      tabBase: tabBase,
       settingsButton: this.api.styles.settingsButton,
       settingsButtonActive: this.api.styles.settingsButtonActive,
       listNumber: 'cdx-list--number',
@@ -433,74 +422,11 @@ class List {
 
       // if (value) {
         this._data.items.push(items[i].innerHTML);
-        this._data.tabs.push(this.getTabCount(items[i]));
+        this._data.tabs.push(getTabCount(items[i]));
       // }
     }
 
     return this._data;
-  }
-
-  /**
-   * set tabs
-   * @param elem {element} target to set tabs
-   * @param num {number} number of tabs to add
-   */
-  setTab(elem, num) {
-    this.removeTab(elem);
-
-    elem.classList.add(`${this.CSS.tabBase}${num <= MAX_TABS ? num : MAX_TABS}`);
-  }
-
-  /**
-   * get amount of tabs
-   * @param elem {element} target element to extract tab count
-   * @returns {number}
-   */
-  getTabCount(elem) {
-    const elemClassList = elem.className.split(" ");
-    //  clear original tabs
-    let tabs = 0;
-    elemClassList.forEach(className => {
-      if(className.includes(this.CSS.tabBase)) {
-        tabs = `${className.charAt(className.length - 1)}`;
-      }
-    });
-    return Number(tabs);
-  }
-
-  /**
-   *  remove all tabs
-   * @param elem {element} target to remove tabs
-   */
-  removeTab(elem) {
-    const elemClassList = elem.className.split(" ");
-    elemClassList.forEach(className => {
-      if(className.includes(this.CSS.tabBase)) elem.classList.remove(className);
-    });
-  }
-
-  /**
-   * Helper for making Elements with attributes
-   *
-   * @param  {string} tagName           - new Element tag name
-   * @param  {Array|string} classNames  - list or name of CSS classname(s)
-   * @param  {object} attributes        - any attributes
-   * @returns {Element}
-   */
-  _make(tagName, classNames = null, attributes = {}) {
-    const el = document.createElement(tagName);
-
-    if (Array.isArray(classNames)) {
-      el.classList.add(...classNames);
-    } else if (classNames) {
-      el.classList.add(classNames);
-    }
-
-    for (const attrName in attributes) {
-      el[attrName] = attributes[attrName];
-    }
-
-    return el;
   }
 
   /**
@@ -623,15 +549,6 @@ class List {
 
     return data;
   }
-}
-
-/**
- * get current focused element
- * @returns {element}
- */
-function getCurrentNode() {
-  const node = window.getSelection().getRangeAt(0).commonAncestorContainer;
-  return node.nodeType === 1 ? node : node.parentNode;
 }
 
 module.exports = List;
