@@ -5,7 +5,8 @@ import { IconListBulleted, IconListNumbered } from '@codexteam/icons';
 /**
  * Build styles
  */
-import './../styles/index.pcss';
+// disable auto import
+// import './../styles/index.pcss';
 
 /**
  * @typedef {object} ListData
