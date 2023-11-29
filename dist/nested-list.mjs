@@ -398,7 +398,8 @@ class u {
    */
   enterPressed(e) {
     const t = this.currentItem;
-    e.stopPropagation(), e.preventDefault();
+    if (e.stopPropagation(), e.preventDefault(), e.isComposing)
+      return;
     const r = this.getItemContent(t).trim().length === 0, s = t.parentNode === this.nodes.wrapper, n = t.nextElementSibling === null;
     if (s && n && r) {
       this.getOutOfList();
