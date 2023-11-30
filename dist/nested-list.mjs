@@ -1,19 +1,19 @@
-function p(d, e = null, t = {}) {
-  const r = document.createElement(d);
+function p(h, e = null, t = {}) {
+  const r = document.createElement(h);
   Array.isArray(e) ? r.classList.add(...e) : e && r.classList.add(e);
   for (const s in t)
     r[s] = t[s];
   return r;
 }
-function g(d) {
+function f(h) {
   const e = p("div");
-  return e.appendChild(d), e.innerHTML;
+  return e.appendChild(h), e.innerHTML;
 }
-function C(d) {
+function w(h) {
   let e;
-  return d.nodeType !== Node.ELEMENT_NODE ? e = d.textContent : (e = d.innerHTML, e = e.replaceAll("<br>", "")), e.trim().length === 0;
+  return h.nodeType !== Node.ELEMENT_NODE ? e = h.textContent : (e = h.innerHTML, e = e.replaceAll("<br>", "")), e.trim().length === 0;
 }
-class c {
+class d {
   /**
    * Store internal properties
    */
@@ -26,7 +26,7 @@ class c {
    * @returns {void}
    */
   save() {
-    const e = c.range, t = p("span");
+    const e = d.range, t = p("span");
     t.hidden = !0, e.insertNode(t), this.savedFakeCaret = t;
   }
   /**
@@ -89,7 +89,7 @@ class c {
     if (e.focusOffset > 0)
       return !1;
     const t = e.focusNode;
-    return c.getHigherLevelSiblings(t, "left").every((n) => C(n));
+    return d.getHigherLevelSiblings(t, "left").every((n) => w(n));
   }
   /**
    * Get all first-level (first child of [contenteditabel]) siblings from passed node
@@ -120,8 +120,8 @@ class c {
     return s;
   }
 }
-const y = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><line x1="9" x2="19" y1="7" y2="7" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="9" x2="19" y1="12" y2="12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="9" x2="19" y1="17" y2="17" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 17H4.99002"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 12H4.99002"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 7H4.99002"/></svg>', S = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><line x1="12" x2="19" y1="7" y2="7" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="12" x2="19" y1="12" y2="12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="12" x2="19" y1="17" y2="17" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M7.79999 14L7.79999 7.2135C7.79999 7.12872 7.7011 7.0824 7.63597 7.13668L4.79999 9.5"/></svg>';
-class u {
+const k = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><line x1="9" x2="19" y1="7" y2="7" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="9" x2="19" y1="12" y2="12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="9" x2="19" y1="17" y2="17" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 17H4.99002"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 12H4.99002"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5.00001 7H4.99002"/></svg>', y = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><line x1="12" x2="19" y1="7" y2="7" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="12" x2="19" y1="12" y2="12" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><line x1="12" x2="19" y1="17" y2="17" stroke="currentColor" stroke-linecap="round" stroke-width="2"/><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M7.79999 14L7.79999 7.2135C7.79999 7.12872 7.7011 7.0824 7.63597 7.13668L4.79999 9.5"/></svg>';
+class S {
   /**
    * Notify core that read-only mode is supported
    *
@@ -148,7 +148,7 @@ class u {
    */
   static get toolbox() {
     return {
-      icon: S,
+      icon: y,
       title: "List"
     };
   }
@@ -169,7 +169,7 @@ class u {
       style: this.defaultListStyle,
       items: []
     };
-    this.data = e && Object.keys(e).length ? e : n, this.caret = new c();
+    this.data = e && Object.keys(e).length ? e : n, this.caret = new d();
   }
   /**
    * Returns list tag with items
@@ -206,12 +206,12 @@ class u {
       {
         name: "unordered",
         label: this.api.i18n.t("Unordered"),
-        icon: y
+        icon: k
       },
       {
         name: "ordered",
         label: this.api.i18n.t("Ordered"),
-        icon: S
+        icon: y
       }
     ].map((t) => ({
       name: t.name,
@@ -265,15 +265,31 @@ class u {
     const n = {
       style: r,
       items: []
-    }, o = (l) => Array.from(l.querySelectorAll(":scope > li")).map((i) => {
-      var m;
-      const a = i.querySelector(`:scope > ${s}`), f = a ? o(a) : [];
+    }, a = (o) => {
+      let i = [];
+      return Array.from(o.querySelectorAll(`:scope > li, :scope > ${s}`)).map((m) => {
+        if (m.tagName === t) {
+          const g = l(o), C = i.pop();
+          C.items = g, i = i.concat(C);
+        } else {
+          const g = c(m);
+          i = i.concat(g);
+        }
+      }), i;
+    }, c = (o) => {
+      var u;
+      const i = l(o);
       return {
-        content: ((m = i == null ? void 0 : i.firstChild) == null ? void 0 : m.textContent) || "",
-        items: f
+        content: ((u = o == null ? void 0 : o.firstChild) == null ? void 0 : u.textContent) || "",
+        items: i
       };
-    });
-    return n.items = o(e), n;
+    }, l = (o) => {
+      let i = [];
+      return Array.from(o.querySelectorAll(`:scope > ${s}`)).map((m) => {
+        i = i.concat(a(m));
+      }), i;
+    };
+    return n.items = a(e), n;
   }
   /**
    * Renders children list
@@ -309,10 +325,10 @@ class u {
    */
   save() {
     const e = (t) => Array.from(t.querySelectorAll(`:scope > .${this.CSS.item}`)).map((s) => {
-      const n = s.querySelector(`.${this.CSS.itemChildren}`), o = this.getItemContent(s), l = n ? e(n) : [];
+      const n = s.querySelector(`.${this.CSS.itemChildren}`), a = this.getItemContent(s), c = n ? e(n) : [];
       return {
-        content: o,
-        items: l
+        content: a,
+        items: c
       };
     });
     return {
@@ -408,8 +424,8 @@ class u {
       this.unshiftItem();
       return;
     }
-    const o = c.extractFragmentFromCaretPositionTillTheEnd(), l = g(o), h = t.querySelector(`.${this.CSS.itemChildren}`), i = this.createItem(l, void 0);
-    h && Array.from(h.querySelectorAll(`.${this.CSS.item}`)).length > 0 ? h.prepend(i) : t.after(i), this.focusItem(i);
+    const a = d.extractFragmentFromCaretPositionTillTheEnd(), c = f(a), l = t.querySelector(`.${this.CSS.itemChildren}`), o = this.createItem(c, void 0);
+    l && Array.from(l.querySelectorAll(`.${this.CSS.item}`)).length > 0 ? l.prepend(o) : t.after(o), this.focusItem(o);
   }
   /**
    * Decrease indentation of the current item
@@ -432,7 +448,7 @@ class u {
    */
   getItemContent(e) {
     const t = e.querySelector(`.${this.CSS.itemContent}`);
-    return C(t) ? "" : t.innerHTML;
+    return w(t) ? "" : t.innerHTML;
   }
   /**
    * Sets focus to the item's content
@@ -443,7 +459,7 @@ class u {
    */
   focusItem(e, t = !0) {
     const r = e.querySelector(`.${this.CSS.itemContent}`);
-    c.focus(r, t);
+    d.focus(r, t);
   }
   /**
    * Get out from List Tool by Enter on the empty last item
@@ -459,7 +475,7 @@ class u {
    * @param {KeyboardEvent} event - keydown
    */
   backspace(e) {
-    if (!c.isAtStart())
+    if (!d.isAtStart())
       return;
     e.preventDefault();
     const t = this.currentItem, r = t.previousSibling, s = t.parentNode.closest(`.${this.CSS.item}`);
@@ -468,15 +484,15 @@ class u {
     e.stopPropagation();
     let n;
     if (r) {
-      const a = r.querySelectorAll(`.${this.CSS.item}`);
-      n = Array.from(a).pop() || r;
+      const i = r.querySelectorAll(`.${this.CSS.item}`);
+      n = Array.from(i).pop() || r;
     } else
       n = s;
-    const o = c.extractFragmentFromCaretPositionTillTheEnd(), l = g(o), h = n.querySelector(`.${this.CSS.itemContent}`);
-    c.focus(h, !1), this.caret.save(), h.insertAdjacentHTML("beforeend", l);
-    let i = t.querySelectorAll(`.${this.CSS.itemChildren} > .${this.CSS.item}`);
-    i = Array.from(i), i = i.filter((a) => a.parentNode.closest(`.${this.CSS.item}`) === t), i.reverse().forEach((a) => {
-      r ? n.after(a) : t.after(a);
+    const a = d.extractFragmentFromCaretPositionTillTheEnd(), c = f(a), l = n.querySelector(`.${this.CSS.itemContent}`);
+    d.focus(l, !1), this.caret.save(), l.insertAdjacentHTML("beforeend", c);
+    let o = t.querySelectorAll(`.${this.CSS.itemChildren} > .${this.CSS.item}`);
+    o = Array.from(o), o = o.filter((i) => i.parentNode.closest(`.${this.CSS.item}`) === t), o.reverse().forEach((i) => {
+      r ? n.after(i) : t.after(i);
     }), t.remove(), this.caret.restore();
   }
   /**
@@ -493,8 +509,8 @@ class u {
     if (this.caret.save(), n)
       n.appendChild(t);
     else {
-      const o = this.makeListWrapper(void 0, [this.CSS.itemChildren]), l = r.querySelector(`.${this.CSS.itemBody}`);
-      o.appendChild(t), l.appendChild(o);
+      const a = this.makeListWrapper(void 0, [this.CSS.itemChildren]), c = r.querySelector(`.${this.CSS.itemBody}`);
+      a.appendChild(t), c.appendChild(a);
     }
     this.caret.restore();
   }
@@ -514,14 +530,14 @@ class u {
    * @returns {string}
    */
   static joinRecursive(e) {
-    return e.items.map((t) => `${t.content} ${u.joinRecursive(t)}`).join("");
+    return e.items.map((t) => `${t.content} ${S.joinRecursive(t)}`).join("");
   }
   /**
    * Convert from text to list with import and export list to text
    */
   static get conversionConfig() {
     return {
-      export: (e) => u.joinRecursive(e),
+      export: (e) => S.joinRecursive(e),
       import: (e) => ({
         items: [{
           content: e,
@@ -533,5 +549,5 @@ class u {
   }
 }
 export {
-  u as default
+  S as default
 };
