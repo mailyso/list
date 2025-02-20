@@ -67,13 +67,13 @@ export default class EditorjsList {
           style: 'ordered',
         },
       },
-      {
-        icon: IconChecklist,
-        title: 'Checklist',
-        data: {
-          style: 'checklist',
-        },
-      },
+      // {
+      //   icon: IconChecklist,
+      //   title: 'Checklist',
+      //   data: {
+      //     style: 'checklist',
+      //   },
+      // },
     ];
   }
 
@@ -291,70 +291,70 @@ export default class EditorjsList {
           this.listStyle = 'ordered';
         },
       },
-      {
-        label: this.api.i18n.t('Checklist'),
-        icon: IconChecklist,
-        closeOnActivate: true,
-        isActive: this.listStyle == 'checklist',
-        onActivate: () => {
-          this.listStyle = 'checklist';
-        },
-      },
+      // {
+      //   label: this.api.i18n.t('Checklist'),
+      //   icon: IconChecklist,
+      //   closeOnActivate: true,
+      //   isActive: this.listStyle == 'checklist',
+      //   onActivate: () => {
+      //     this.listStyle = 'checklist';
+      //   },
+      // },
     ];
 
-    if (this.listStyle === 'ordered') {
-      const startWithElement = renderToolboxInput(
-        (index: string) => this.changeStartWith(Number(index)),
-        {
-          value: String((this.data.meta as OrderedListItemMeta).start ?? 1),
-          placeholder: '',
-          attributes: {
-            required: 'true',
-          },
-          sanitize: input => stripNumbers(input),
-        });
-
-      const orderedListTunes: MenuConfigItem[] = [
-        {
-          label: this.api.i18n.t('Start with'),
-          icon: IconStartWith,
-          children: {
-            items: [
-              {
-                element: startWithElement,
-                // @ts-expect-error ts(2820) can not use PopoverItem enum from editor.js types
-                type: 'html',
-              },
-            ],
-          },
-        },
-      ];
-
-      const orderedListCountersTunes: MenuConfigItem = {
-        label: this.api.i18n.t('Counter type'),
-        icon: OlCounterIconsMap.get((this.data.meta as OrderedListItemMeta).counterType!),
-        children: {
-          items: [],
-        },
-      };
-
-      /**
-       * For each counter type in OlCounterType create toolbox item
-       */
-      OlCounterTypesMap.forEach((_, counterType: string) => {
-        orderedListCountersTunes.children.items!.push({
-          title: this.api.i18n.t(counterType),
-          icon: OlCounterIconsMap.get(OlCounterTypesMap.get(counterType)!),
-          isActive: (this.data.meta as OrderedListItemMeta).counterType === OlCounterTypesMap.get(counterType),
-          closeOnActivate: true,
-          onActivate: () => {
-            this.changeCounters(OlCounterTypesMap.get(counterType) as OlCounterType);
-          },
-        });
-      });
-      // @ts-expect-error ts(2820) can not use PopoverItem enum from editor.js types
-      defaultTunes.push({ type: 'separator' }, ...orderedListTunes, orderedListCountersTunes);
-    }
+    // if (this.listStyle === 'ordered') {
+    //   const startWithElement = renderToolboxInput(
+    //     (index: string) => this.changeStartWith(Number(index)),
+    //     {
+    //       value: String((this.data.meta as OrderedListItemMeta).start ?? 1),
+    //       placeholder: '',
+    //       attributes: {
+    //         required: 'true',
+    //       },
+    //       sanitize: input => stripNumbers(input),
+    //     });
+    //
+    //   const orderedListTunes: MenuConfigItem[] = [
+    //     {
+    //       label: this.api.i18n.t('Start with'),
+    //       icon: IconStartWith,
+    //       children: {
+    //         items: [
+    //           {
+    //             element: startWithElement,
+    //             // @ts-expect-error ts(2820) can not use PopoverItem enum from editor.js types
+    //             type: 'html',
+    //           },
+    //         ],
+    //       },
+    //     },
+    //   ];
+    //
+    //   const orderedListCountersTunes: MenuConfigItem = {
+    //     label: this.api.i18n.t('Counter type'),
+    //     icon: OlCounterIconsMap.get((this.data.meta as OrderedListItemMeta).counterType!),
+    //     children: {
+    //       items: [],
+    //     },
+    //   };
+    //
+    //   /**
+    //    * For each counter type in OlCounterType create toolbox item
+    //    */
+    //   OlCounterTypesMap.forEach((_, counterType: string) => {
+    //     orderedListCountersTunes.children.items!.push({
+    //       title: this.api.i18n.t(counterType),
+    //       icon: OlCounterIconsMap.get(OlCounterTypesMap.get(counterType)!),
+    //       isActive: (this.data.meta as OrderedListItemMeta).counterType === OlCounterTypesMap.get(counterType),
+    //       closeOnActivate: true,
+    //       onActivate: () => {
+    //         this.changeCounters(OlCounterTypesMap.get(counterType) as OlCounterType);
+    //       },
+    //     });
+    //   });
+    //   // @ts-expect-error ts(2820) can not use PopoverItem enum from editor.js types
+    //   defaultTunes.push({ type: 'separator' }, ...orderedListTunes, orderedListCountersTunes);
+    // }
 
     return defaultTunes;
   }

@@ -32,6 +32,7 @@
       grid-area: child;
       gap: var(--spacing-s);
       padding-top: var(--spacing-s);
+      counter-reset: item; /* 추가 */
     }
 
     [contenteditable]{
@@ -53,7 +54,7 @@
   }
 
   &-ordered &__item::before {
-    content: counters(item, ".", var(--list-counter-type)) ".";
+    content: counter(item, var(--list-counter-type)) ".";
   }
 
   &-ordered {
