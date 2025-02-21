@@ -363,9 +363,9 @@ export default class ListTabulator<Renderer extends ListRenderer> {
   public pasteHandler(element: PasteEvent['detail']['data']): ListData {
     const { tagName: tag } = element;
     let style: ListDataStyle = 'unordered';
-    let tagToSearch: string;
+    let tagToSearch: string = '';
 
-    // set list style and tag to search.
+    // 리스트 스타일과 검색할 태그 설정
     switch (tag) {
       case 'OL':
         style = 'ordered';
@@ -375,6 +375,9 @@ export default class ListTabulator<Renderer extends ListRenderer> {
       case 'LI':
         style = 'unordered';
         tagToSearch = 'ul';
+        break;
+      default:
+        tagToSearch = 'ul';
     }
 
     const data: ListData = {
@@ -383,36 +386,71 @@ export default class ListTabulator<Renderer extends ListRenderer> {
       items: [],
     };
 
-    /**
-     * Set default ordered list atributes if style is ordered
-     */
+    // ordered 스타일일 경우 기본 속성 설정
     if (style === 'ordered') {
-      (this.data.meta as OrderedListItemMeta).counterType = 'numeric';
-      (this.data.meta as OrderedListItemMeta).start = 1;
+      (data.meta as OrderedListItemMeta).counterType = 'numeric';
+      (data.meta as OrderedListItemMeta).start = 1;
     }
 
-    // get pasted items from the html.
+    /**
+     * 부모 엘리먼트에서 붙여넣기된 리스트 항목들을 추출한다.
+     * JS 버전과 동일하게 두 가지 형태(직접 li 요소와 별도 중첩 리스트)를 모두 지원.
+     */
     const getPastedItems = (parent: Element): ListItem[] => {
-      // get first level li elements.
-      const children = Array.from(parent.querySelectorAll(`:scope > li`));
+      let responseData: ListItem[] = [];
+      // li와 동시에 tagToSearch(ul 또는 ol) 요소도 선택
+      const children = Array.from(parent.querySelectorAll(`:scope > li, :scope > ${tagToSearch}`));
 
-      return children.map((child) => {
-        // get subitems if they exist.
-        const subItemsWrapper = child.querySelector(`:scope > ${tagToSearch}`);
-        // get subitems.
-        const subItems = subItemsWrapper ? getPastedItems(subItemsWrapper) : [];
-        // get text content of the li element.
-        const content = child.innerHTML ?? '';
+      children.forEach((child) => {
+        // 붙여넣기 포맷에 따라 분기 처리
+        if (child.tagName === tag) {
+          // Case 2: li와 별도로 붙여넣어진 중첩 리스트 처리
+          const nestedListGroup = getNestedListGroup(parent);
+          const previousListItem = responseData.pop();
 
-        return {
-          content,
-          meta: {},
-          items: subItems,
-        };
+          if (previousListItem) {
+            previousListItem.items = nestedListGroup;
+            responseData.push(previousListItem);
+          }
+        } else {
+          const listItem = getListItem(child);
+
+          responseData.push(listItem);
+        }
       });
+
+      return responseData;
     };
 
-    // get pasted items.
+    /**
+     * 개별 li 요소에서 텍스트(첫번째 자식의 텍스트 내용)와 중첩 리스트를 추출한다.
+     */
+    const getListItem = (list: Element): ListItem => {
+      const nestedItems = getNestedListGroup(list);
+      const content = list.firstChild ? list.firstChild.textContent || '' : '';
+
+      return {
+        content,
+        meta: {},
+        items: nestedItems,
+      };
+    };
+
+    /**
+     * 부모 엘리먼트의 직접 자식 중 tagToSearch(ul 또는 ol) 요소를 찾아 재귀적으로 붙여넣기 항목을 추출한다.
+     */
+    const getNestedListGroup = (parent: Element): ListItem[] => {
+      let responseData: ListItem[] = [];
+      const nestedListGroups = Array.from(parent.querySelectorAll(`:scope > ${tagToSearch}`));
+
+      nestedListGroups.forEach((nestedListGroup) => {
+        responseData = responseData.concat(getPastedItems(nestedListGroup));
+      });
+
+      return responseData;
+    };
+
+    // 최종 붙여넣기 데이터 구성
     data.items = getPastedItems(element);
 
     return data;

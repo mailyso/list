@@ -55,25 +55,18 @@ export default class EditorjsList {
     return [
       {
         icon: IconListBulleted,
-        title: 'Unordered List',
+        title: 'List',
         data: {
           style: 'unordered',
         },
       },
-      {
-        icon: IconListNumbered,
-        title: 'Ordered List',
-        data: {
-          style: 'ordered',
-        },
-      },
-      {
-        icon: IconChecklist,
-        title: 'Checklist',
-        data: {
-          style: 'checklist',
-        },
-      },
+      // {
+      //   icon: IconListNumbered,
+      //   title: 'Ordered List',
+      //   data: {
+      //     style: 'ordered',
+      //   },
+      // },
     ];
   }
 
@@ -92,13 +85,6 @@ export default class EditorjsList {
    */
   public static get conversionConfig(): {
     /**
-     * Method that is responsible for conversion from data to string
-     * @param data - current list data
-     * @returns - contents string formed from list data
-     */
-    export: (data: ListData) => string;
-
-    /**
      * Method that is responsible for conversion from string to data
      * @param content - contents string
      * @returns - list data formed from contents string
@@ -106,9 +92,6 @@ export default class EditorjsList {
     import: (content: string, config: ToolConfig<ListConfig>) => ListData;
   } {
     return {
-      export: (data) => {
-        return EditorjsList.joinRecursive(data);
-      },
       import: (content, config) => {
         return {
           meta: {},
@@ -291,70 +274,7 @@ export default class EditorjsList {
           this.listStyle = 'ordered';
         },
       },
-      {
-        label: this.api.i18n.t('Checklist'),
-        icon: IconChecklist,
-        closeOnActivate: true,
-        isActive: this.listStyle == 'checklist',
-        onActivate: () => {
-          this.listStyle = 'checklist';
-        },
-      },
     ];
-
-    if (this.listStyle === 'ordered') {
-      const startWithElement = renderToolboxInput(
-        (index: string) => this.changeStartWith(Number(index)),
-        {
-          value: String((this.data.meta as OrderedListItemMeta).start ?? 1),
-          placeholder: '',
-          attributes: {
-            required: 'true',
-          },
-          sanitize: input => stripNumbers(input),
-        });
-
-      const orderedListTunes: MenuConfigItem[] = [
-        {
-          label: this.api.i18n.t('Start with'),
-          icon: IconStartWith,
-          children: {
-            items: [
-              {
-                element: startWithElement,
-                // @ts-expect-error ts(2820) can not use PopoverItem enum from editor.js types
-                type: 'html',
-              },
-            ],
-          },
-        },
-      ];
-
-      const orderedListCountersTunes: MenuConfigItem = {
-        label: this.api.i18n.t('Counter type'),
-        icon: OlCounterIconsMap.get((this.data.meta as OrderedListItemMeta).counterType!),
-        children: {
-          items: [],
-        },
-      };
-
-      /**
-       * For each counter type in OlCounterType create toolbox item
-       */
-      OlCounterTypesMap.forEach((_, counterType: string) => {
-        orderedListCountersTunes.children.items!.push({
-          title: this.api.i18n.t(counterType),
-          icon: OlCounterIconsMap.get(OlCounterTypesMap.get(counterType)!),
-          isActive: (this.data.meta as OrderedListItemMeta).counterType === OlCounterTypesMap.get(counterType),
-          closeOnActivate: true,
-          onActivate: () => {
-            this.changeCounters(OlCounterTypesMap.get(counterType) as OlCounterType);
-          },
-        });
-      });
-      // @ts-expect-error ts(2820) can not use PopoverItem enum from editor.js types
-      defaultTunes.push({ type: 'separator' }, ...orderedListTunes, orderedListCountersTunes);
-    }
 
     return defaultTunes;
   }
