@@ -67,6 +67,10 @@ export default class EditorjsList {
      */
     private defaultListStyle?;
     /**
+     * Default Counter type of the ordered list
+     */
+    private defaultCounterTypes;
+    /**
      * Tool's data
      */
     private data;
